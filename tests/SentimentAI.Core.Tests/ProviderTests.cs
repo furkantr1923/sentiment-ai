@@ -335,7 +335,8 @@ public class AnalysisServiceTests
 /// <summary>Anahtarsız ücretsiz sağlayıcı (Pollinations).</summary>
 public class PollinationsProviderTests
 {
-    private static PollinationsProvider Create(StubHandler h) => new(new StubHttpClientFactory(h), new InMemoryKeyStore());
+    private static PollinationsProvider Create(StubHandler h) =>
+        new(new StubHttpClientFactory(h), new InMemoryKeyStore()) { BusyRetryDelay = TimeSpan.Zero };
 
     [Fact]
     public async Task Anahtar_olmadan_hazir_ve_analiz_yapar()
@@ -362,6 +363,17 @@ public class PollinationsProviderTests
 
         Assert.Equal(2, h.Requests.Count);
         Assert.Contains("gen.pollinations.ai", h.Requests[1].RequestUri!.ToString());
+        Assert.Equal(Polarity.Positive, r.Polarity);
+    }
+
+    [Fact]
+    public async Task Yogunluk_hatasinda_bir_kez_yeniden_denenir()
+    {
+        var h = new StubHandler()
+            .Respond(HttpStatusCode.ServiceUnavailable, "{}")
+            .Respond(HttpStatusCode.OK, Samples.GroqEnvelope(Samples.ValidJson));
+        var r = await Create(h).AnalyzeAsync("metin", CancellationToken.None);
+        Assert.Equal(2, h.Requests.Count);
         Assert.Equal(Polarity.Positive, r.Polarity);
     }
 

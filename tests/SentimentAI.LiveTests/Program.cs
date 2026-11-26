@@ -90,11 +90,13 @@ await Run("Pollinations (anahtarsız): gerçek Türkçe analiz", async () =>
     return Describe(r);
 });
 
-await Task.Delay(TimeSpan.FromSeconds(16)); // anonim katman: ~15 sn'de 1 istek
+await Task.Delay(TimeSpan.FromSeconds(20)); // anonim katman: ~15 sn'de 1 istek
 
 await Run("Pollinations (anahtarsız): ironi tespiti", async () =>
 {
-    var r = await new PollinationsProvider(http, new EnvKeyStore("yok", null)).AnalyzeAsync(ironic, CancellationToken.None);
+    // Uygulamadaki akışın aynısı: doğrulama + anonimleştirme + sınırlı yeniden deneme
+    var service = new AnalysisService([new PollinationsProvider(http, new EnvKeyStore("yok", null))], new AlwaysOnline());
+    var r = (await service.AnalyzeAsync(ironic, _ => Task.FromResult(false), CancellationToken.None)).Result;
     return $"ironi {(r.Irony.Detected ? "var" : "yok")} (%{r.Irony.Score}), sarkazm %{r.Sarcasm.Score}, temel duygu {AnalysisResult.PolarityLabel(r.Polarity)}, yazım önerisi {r.SpellingIssues.Count}";
 });
 

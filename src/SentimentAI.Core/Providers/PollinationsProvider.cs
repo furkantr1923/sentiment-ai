@@ -58,14 +58,9 @@ public sealed class PollinationsProvider : HttpAIProviderBase
                     new JsonObject { ["role"] = "user", ["content"] = PromptBuilder.BuildUserMessage(anonymizedText) }),
             };
 
-            using var request = JsonPost(endpoint, body);
-            if (!string.IsNullOrWhiteSpace(apiKey))
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
-
             try
             {
-                var responseBody = await SendForBodyAsync(request, ct).ConfigureAwait(false);
-                return GroqProvider.ExtractText(responseBody, Id); // aynı OpenAI yanıt biçimi
+                return await SendWithBusyRetryAsync(endpoint, body, apiKey, ct).ConfigureAwait(false);
             }
             catch (AnalysisException ex) when (IsEndpointGone(ex))
             {
@@ -86,6 +81,31 @@ public sealed class PollinationsProvider : HttpAIProviderBase
                 "Ücretsiz anahtarsız servis şu anda anonim istek kabul etmiyor. Ayarlar'dan ücretsiz bir Gemini veya Groq anahtarı ekleyebilirsin.",
                 Id, statusCode: last.StatusCode);
     }
+
+    /// <summary>
+    /// Ücretsiz anonim servis yoğunken 502/503 döndürebilir: bir kez, kısa bir beklemeden sonra yeniden denenir.
+    /// </summary>
+    private async Task<string> SendWithBusyRetryAsync(string endpoint, JsonObject body, string apiKey, CancellationToken ct)
+    {
+        for (int attempt = 0; ; attempt++)
+        {
+            using var request = JsonPost(endpoint, body.DeepClone());
+            if (!string.IsNullOrWhiteSpace(apiKey))
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            try
+            {
+                var responseBody = await SendForBodyAsync(request, ct).ConfigureAwait(false);
+                return GroqProvider.ExtractText(responseBody, Id); // aynı OpenAI yanıt biçimi
+            }
+            catch (AnalysisException ex) when (attempt == 0 && ex.StatusCode is 502 or 503)
+            {
+                await Task.Delay(BusyRetryDelay, ct).ConfigureAwait(false);
+            }
+        }
+    }
+
+    /// <summary>Yoğunluk hatasından sonra bekleme (testlerde kısaltılabilir).</summary>
+    public TimeSpan BusyRetryDelay { get; init; } = TimeSpan.FromSeconds(5);
 
     protected override HttpRequestMessage BuildStatusRequest(string apiKey) =>
         new(HttpMethod.Get, "https://text.pollinations.ai/models");
