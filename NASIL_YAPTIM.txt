@@ -60,8 +60,13 @@ installer/             -> Windows Setup.exe betiği (Inno Setup)
 4) YAPAY ZEKÂ KISMI NASIL ÇALIŞIYOR?
 ---------------------------------------------------------------------
 - Sahte sonuç YOK. Gerçek API çağrısı yapılıyor.
-- Ana sağlayıcı Google Gemini, yedek sağlayıcı Groq. İkisinin de ücretsiz
-  katmanı var, kredi kartı istemiyor.
+- Varsayılan sağlayıcı Pollinations.ai: ücretsiz ve ANAHTARSIZ. Bu sayede
+  uygulama kurulur kurulmaz hiçbir ayar yapmadan çalışıyor. Uygulamaya
+  gizli bir API anahtarı GÖMMEDİM; gömülen anahtar APK/EXE içinden kolayca
+  çıkarılıp kötüye kullanılabilir. Anahtarsız servis bu riski ortadan
+  kaldırıyor.
+- İsteğe bağlı olarak kullanıcı kendi ücretsiz Google Gemini veya Groq
+  anahtarını girebiliyor; girilirse önce onlar kullanılıyor.
 - Her sağlayıcı aynı arayüzü (IAIProvider) uyguluyor:
   AnalyzeAsync, IsAvailableAsync, GetProviderStatusAsync.
   Yarın yeni bir sağlayıcı eklemek için sadece yeni bir sınıf yazmak yeter.
@@ -72,8 +77,10 @@ installer/             -> Windows Setup.exe betiği (Inno Setup)
   uydurmuyor, "Geçersiz yanıt" hatası veriyor.
 - Model adları için "gemini-flash-latest" gibi takma adlar kullandım;
   model emekli olursa (404) aynı sağlayıcının yedek modeline geçiyor.
-- API anahtarı kodda YOK. Kullanıcı Ayarlar'dan giriyor; anahtar
-  Android Keystore / Windows DPAPI ile şifreli saklanıyor.
+- Kullanıcı kendi anahtarını girerse anahtar Android Keystore /
+  Windows DPAPI ile şifreli saklanıyor; kodda hiçbir anahtar yok.
+- Anahtarsız servis yoğunken 503 verebiliyor; 5 saniye bekleyip bir kez
+  daha deniyorum.
 
 ---------------------------------------------------------------------
 5) HATA YÖNETİMİ VE YEDEK SAĞLAYICIYA GEÇİŞ
@@ -136,14 +143,15 @@ olabilir, ne yapabilirsin.
 ---------------------------------------------------------------------
 9) TESTLER
 ---------------------------------------------------------------------
-- Birim testleri: metin doğrulama, anonimleştirme, JSON ayrıştırma,
+- 94 birim/entegrasyon testi: metin doğrulama, anonimleştirme, JSON ayrıştırma,
   hata sınıflandırma, sağlayıcı geçiş mantığı, dosya okuma, geçici veri
   temizliği.
 - Entegrasyon testleri: Sahte bir HTTP sunucusuyla geçersiz anahtar,
   kota dolması, ağ kesilmesi, zaman aşımı, bozuk JSON, model bulunamadı.
 - Canlı API testleri: Gerçek Gemini ve Groq sunucularına istek atıyor.
-  Anahtar gerektirmeyen testler (geçersiz anahtar, zaman aşımı) her
-  derlemede gerçek sunucuya karşı çalışıyor.
+  Anahtarsız Pollinations ile GERÇEK Türkçe analiz testi her derlemede
+  çalışıyor ve geçiyor. Geçersiz anahtar ve zaman aşımı testleri de gerçek
+  sunuculara gidiyor.
 - Windows testleri: Uygulamanın açılması, Setup kurulumu ve kaldırma,
   Portable açılışı, kapanışta geçici veri temizliği.
 - Android testleri: Emülatörde APK kurulumu, açılış, çökme kontrolü,

@@ -6,12 +6,12 @@ Tüm testler **GitHub Actions** üzerinde, her `main` gönderiminde otomatik ça
 
 | Test grubu | Ortam | Sonuç |
 |---|---|---|
-| Birim + entegrasyon (sahte HTTP sunucusu) | Ubuntu, .NET 10 | ✅ **89 / 89 geçti** |
-| Canlı API (gerçek Gemini/Groq sunucuları) | Ubuntu | ✅ 4 geçti · ⏭️ 4 atlandı (API anahtarı secret'ı yok) · ❌ 0 |
+| Birim + entegrasyon (sahte HTTP sunucusu) | Ubuntu, .NET 10 | ✅ **94 / 94 geçti** |
+| Canlı API (gerçek sunucular) | Ubuntu | ✅ 6 geçti (2'si anahtarsız gerçek analiz) · ⏭️ 4 atlandı (Gemini/Groq anahtar secret'ı yok) · ❌ 0 |
 | Windows duman testleri | Windows Server 2025 VM | ✅ **10 / 10 geçti** |
 | Android emülatör testleri | API 34, x86_64 | ✅ **6 / 6 geçti** |
 
-## Birim ve entegrasyon testleri (89)
+## Birim ve entegrasyon testleri (94)
 
 | Konu | Kapsam |
 |---|---|
@@ -27,6 +27,8 @@ Tüm testler **GitHub Actions** üzerinde, her `main` gönderiminde otomatik ça
 
 | Test | Sonuç |
 |---|---|
+| **Pollinations (anahtarsız): gerçek Türkçe analiz** | ✅ Pozitif · Mutluluk · güven %80 · 11 duygu · 5 anahtar kelime |
+| **Pollinations (anahtarsız): ironi örneği** | ✅ istek başarılı; ⚠️ ironik cümlede ironi tespit edilmedi (ücretsiz modelin kalitesi sınırlı) |
 | Gemini: geçersiz API anahtarı | ✅ HTTP 400 → `InvalidApiKey` |
 | Groq: geçersiz API anahtarı | ✅ HTTP 401 → `InvalidApiKey` |
 | Durum kontrolü geçersiz anahtarı raporlar | ✅ |
@@ -50,4 +52,5 @@ APK: `com.furkan.sentimentai` 1.0.0 · minSdk 24 · targetSdk 34 · arm64-v8a + 
 - ❗ **Gerçek fiziksel Android cihazda** test yapılmadı (yalnızca emülatör).
 - ❗ **Kişisel Windows bilgisayarda** test yapılmadı (yalnızca GitHub Actions sanal makinesi).
 - ❗ Arayüz üzerinden uçtan uca gerçek analiz (anahtar girip metin analiz etme) otomatik test edilmedi; analiz akışı Core katmanında sahte sunucu ve gerçek sunucu testleriyle doğrulandı.
-- ❗ Gerçek API ile başarılı analiz, CI'da anahtar secret'ı olmadığı için çalıştırılmadı.
+- ❗ Gemini/Groq ile gerçek analiz, CI'da anahtar secret'ı olmadığı için çalıştırılmadı (anahtarsız Pollinations ile gerçek analiz çalıştı).
+- ⚠️ Anahtarsız ücretsiz modelin ironi/sarkazm tespiti zayıf kaldı; daha iyi sonuç için Gemini anahtarı önerilir.

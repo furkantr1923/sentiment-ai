@@ -1,6 +1,6 @@
 # ⚠️ Bilinen Sınırlamalar
 
-1. **İnternet ve API anahtarı gerekir.** Çevrimdışı analiz yoktur; kullanıcı kendi ücretsiz Gemini veya Groq anahtarını girmelidir.
+1. **İnternet gerekir.** Çevrimdışı analiz yoktur. Varsayılan anahtarsız Pollinations servisi ücretsiz bir topluluk servisidir: erişilebilirlik garantisi yoktur, yaklaşık 15 saniyede 1 istek sınırı vardır ve model kalitesi (özellikle ironi tespiti) Gemini'nin gerisinde kalabilir. Kendi ücretsiz Gemini/Groq anahtarını eklemek bu sınırları kaldırır.
 2. **Ücretsiz kotalar değişebilir.** Sağlayıcılar ücretsiz katman sınırlarını veya modelleri önceden haber vermeden değiştirebilir. Uygulama "-latest" model takma adları ve model yedeği ile buna dayanıklı olacak şekilde tasarlandı, ancak garanti verilemez.
 3. **Sonuçlar tahmindir.** Güven yüzdesi modelin kendi tahminidir, kalibre edilmiş istatistiksel kesinlik değildir. Hedef kitle, amaç, ironi/sarkazm tespitleri yorumdur.
 4. **Anonimleştirme kusursuz değildir.** İsimler, serbest biçimli adresler ve bağlamdan anlaşılan kişisel bilgiler yakalanamayabilir.

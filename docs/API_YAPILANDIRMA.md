@@ -1,6 +1,19 @@
 # 🔑 API Yapılandırma Rehberi
 
-SENTIMENT AI analizleri gerçek yapay zekâ API'leriyle yapar. Uygulamanın içinde **hiçbir API anahtarı gömülü değildir**; her kullanıcı kendi ücretsiz anahtarını girer.
+SENTIMENT AI analizleri gerçek yapay zekâ API'leriyle yapar. **Hiçbir ayar gerekmez:** uygulama varsayılan olarak anahtarsız ve ücretsiz **Pollinations.ai** servisini kullanır. Uygulamanın içinde gizli bir API anahtarı gömülü değildir (çalınabilecek bir anahtar yoktur).
+
+## Varsayılan: Pollinations.ai (anahtarsız)
+
+| | |
+|---|---|
+| Uç nokta | `text.pollinations.ai/openai` → yedek `gen.pollinations.ai/v1/chat/completions` |
+| Anahtar / hesap | Gerekmez |
+| Sınır | Anonim kullanımda yaklaşık 15 saniyede 1 istek; yoğunlukta 503 → 5 sn sonra 1 yeniden deneme |
+| Not | Ücretsiz topluluk servisidir, erişilebilirlik garantisi yoktur |
+
+## İsteğe bağlı: kendi anahtarınız
+
+Daha yüksek kota ve kararlılık için kendi ücretsiz anahtarınızı ekleyebilirsiniz; girildiğinde önce bu sağlayıcı kullanılır.
 
 ## Desteklenen sağlayıcılar
 

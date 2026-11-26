@@ -40,7 +40,7 @@ Windows 10/11 ve Android için yapay zekâ destekli, hafif ve gizlilik odaklı m
 | `SENTIMENT-AI-Windows-x64.zip` | Windows — klasör hâlinde, `SentimentAI.exe` ile çalışır |
 | `SENTIMENT-AI.apk` | Android 7.0+ (arm64 / arm) |
 
-İlk açılışta **Ayarlar → API yapılandırması** bölümünden ücretsiz bir **Gemini** veya **Groq** anahtarı girin → [API rehberi](docs/API_YAPILANDIRMA.md).
+**Kur ve kullan — ayar gerekmez.** Uygulama varsayılan olarak anahtarsız, ücretsiz **Pollinations.ai** servisiyle çalışır. İsterseniz daha yüksek kota için Ayarlar'dan kendi ücretsiz **Gemini** veya **Groq** anahtarınızı ekleyebilirsiniz → [API rehberi](docs/API_YAPILANDIRMA.md).
 
 ## 🏗️ Mimari
 
@@ -49,16 +49,17 @@ flowchart LR
     UI[Windows / Android arayüzü<br/>XAML + MVVM] --> VM[MainViewModel]
     VM --> AS[AnalysisService]
     AS --> V[TextValidator] --> AN[Anonymizer<br/>cihazda] --> P{Provider Abstraction<br/>IAIProvider}
-    P -->|ana| G[Gemini API]
-    P -->|onayla yedek| Q[Groq API]
-    G & Q --> PR[AnalysisParser] --> VM
+    P -->|anahtar varsa| G[Gemini API]
+    P -->|anahtar varsa| Q[Groq API]
+    P -->|varsayılan, anahtarsız| PO[Pollinations.ai]
+    G & Q & PO --> PR[AnalysisParser] --> VM
     VM --> CH[Grafikler<br/>Maui.Graphics]
     F[FileTextExtractor<br/>TXT · PDF · DOCX · CSV · XLSX] --> VM
 ```
 
 - **SentimentAI.Core** — arayüzden bağımsız iş mantığı (sağlayıcılar, ayrıştırıcı, anonimleştirme, dosya okuma)
 - **SentimentAI.App** — .NET MAUI; Windows ve Android için **ayrı sayfa düzenleri**, ortak ViewModel
-- **tests/** — 89 birim + entegrasyon testi ve gerçek API sunucularına karşı canlı testler
+- **tests/** — 94 birim + entegrasyon testi ve gerçek API sunucularına karşı canlı testler
 
 Ayrıntı: [docs/MIMARI.md](docs/MIMARI.md)
 
