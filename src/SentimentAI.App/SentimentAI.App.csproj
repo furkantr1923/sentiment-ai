@@ -4,6 +4,8 @@
     <!-- Linux/macOS'ta yalnızca Android, Windows'ta Android + Windows derlenir -->
     <TargetFrameworks>net10.0-android</TargetFrameworks>
     <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net10.0-windows10.0.19041.0</TargetFrameworks>
+    <!-- CI: yalnızca Windows iş yükü kurulu makinede Windows hedefini derlemek için -->
+    <TargetFrameworks Condition="'$(WindowsOnly)' == 'true'">net10.0-windows10.0.19041.0</TargetFrameworks>
 
     <OutputType>Exe</OutputType>
     <RootNamespace>SentimentAI.App</RootNamespace>
@@ -32,7 +34,9 @@
 
   <!-- Android: yalnızca gerçek cihaz mimarileri (APK boyutunu küçük tutar) -->
   <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
-    <RuntimeIdentifiers Condition="'$(RuntimeIdentifiers)' == ''">android-arm64;android-arm</RuntimeIdentifiers>
+    <RuntimeIdentifiers>android-arm64;android-arm</RuntimeIdentifiers>
+    <!-- CI emülatör testi için x86_64 derlemesi -->
+    <RuntimeIdentifiers Condition="'$(AndroidEmulatorBuild)' == 'true'">android-x64</RuntimeIdentifiers>
     <AndroidPackageFormat>apk</AndroidPackageFormat>
   </PropertyGroup>
 

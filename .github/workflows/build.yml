@@ -91,7 +91,7 @@ jobs:
       - name: Emülatör test APK'sı (x86_64)
         run: |
           dotnet publish src/SentimentAI.App/SentimentAI.App.csproj -f net10.0-android -c Release -o out/android-x64 \
-            -p:RuntimeIdentifiers=android-x64 -p:ApplicationDisplayVersion=$APP_VERSION \
+            -p:AndroidEmulatorBuild=true -p:ApplicationDisplayVersion=$APP_VERSION \
             -p:AndroidKeyStore=true -p:AndroidSigningKeyStore=$KS_PATH -p:AndroidSigningKeyAlias=sentimentai \
             -p:AndroidSigningKeyPass=env:KS_PASS -p:AndroidSigningStorePass=env:KS_PASS
           cp "$(ls out/android-x64/*-Signed.apk | head -1)" dist-x64.apk
@@ -140,7 +140,7 @@ jobs:
         shell: pwsh
         run: |
           dotnet publish src/SentimentAI.App/SentimentAI.App.csproj -c Release `
-            -f net10.0-windows10.0.19041.0 -p:TargetFrameworks=net10.0-windows10.0.19041.0 `
+            -f net10.0-windows10.0.19041.0 -p:WindowsOnly=true `
             -p:RuntimeIdentifierOverride=win-x64 -p:WindowsPackageType=None `
             -p:WindowsAppSDKSelfContained=true -p:SelfContained=true `
             -p:ApplicationDisplayVersion=$env:APP_VERSION -o out/win
