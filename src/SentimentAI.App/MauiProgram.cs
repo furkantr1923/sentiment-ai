@@ -25,7 +25,7 @@ public static class MauiProgram
         var services = builder.Services;
 
         // --- Yönetilen HTTP istemcileri (HttpClientFactory)
-        foreach (var name in new[] { "provider-" + GeminiProvider.ProviderId, "provider-" + GroqProvider.ProviderId })
+        foreach (var name in new[] { "provider-" + GeminiProvider.ProviderId, "provider-" + GroqProvider.ProviderId, "provider-" + PollinationsProvider.ProviderId })
         {
             services.AddHttpClient(name, c =>
                 {
@@ -42,11 +42,15 @@ public static class MauiProgram
         services.AddSingleton<IDialogService, DialogService>();
         services.AddSingleton<SessionCleaner>();
 
-        // --- Sağlayıcılar (kayıt sırası = öncelik: Gemini ana, Groq yedek)
+        // --- Sağlayıcılar (kayıt sırası = öncelik).
+        // Kullanıcı kendi anahtarını girdiyse önce Gemini/Groq; hiç anahtar yoksa uygulama doğrudan
+        // anahtarsız ücretsiz Pollinations ile çalışır (kurulumdan hemen sonra ayar gerektirmez).
         services.AddSingleton<GeminiProvider>();
         services.AddSingleton<GroqProvider>();
+        services.AddSingleton<PollinationsProvider>();
         services.AddSingleton<IAIProvider>(sp => sp.GetRequiredService<GeminiProvider>());
         services.AddSingleton<IAIProvider>(sp => sp.GetRequiredService<GroqProvider>());
+        services.AddSingleton<IAIProvider>(sp => sp.GetRequiredService<PollinationsProvider>());
         services.AddSingleton(sp => new AnalysisService(
             sp.GetServices<IAIProvider>(),
             sp.GetRequiredService<INetworkStatus>(),

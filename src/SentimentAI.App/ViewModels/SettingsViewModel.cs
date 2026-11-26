@@ -44,7 +44,12 @@ public sealed class ProviderItemViewModel : ObservableObject
     public AsyncCommand GetKeyCommand { get; }
 
     public string Name => _provider.DisplayName;
-    public string RoleText => IsPrimary ? "Ana sağlayıcı" : "Yedek sağlayıcı";
+    public string RoleText => !_provider.RequiresApiKey
+        ? "Varsayılan · anahtar gerekmez"
+        : IsPrimary ? "İsteğe bağlı · anahtar girilirse önce bu kullanılır" : "İsteğe bağlı · yedek";
+
+    /// <summary>Anahtarsız sağlayıcıda anahtar alanı ve düğmeleri gizlenir.</summary>
+    public bool ShowKeyControls => _provider.RequiresApiKey;
     public bool IsPrimary { get; }
     public string ModelText => $"Model: {_provider.ModelName}";
     public string PrivacyNote => _provider.PrivacyNote;
@@ -74,7 +79,8 @@ public sealed class ProviderItemViewModel : ObservableObject
 
     private void SetStatusFromConfig()
     {
-        StatusText = IsConfigured ? "Anahtar kayıtlı · durumu görmek için Test et" : "Anahtar girilmemiş";
+        StatusText = !_provider.RequiresApiKey ? "Hazır · anahtar gerekmez"
+            : IsConfigured ? "Anahtar kayıtlı · durumu görmek için Test et" : "Anahtar girilmemiş (isteğe bağlı)";
         StatusColor = IsConfigured ? Palette.Warning : Palette.TextMuted;
     }
 
@@ -117,7 +123,7 @@ public sealed class ProviderItemViewModel : ObservableObject
             var status = await _provider.GetProviderStatusAsync(CancellationToken.None);
             StatusText = status.State switch
             {
-                ProviderState.Ready => "Hazır · anahtar geçerli",
+                ProviderState.Ready => _provider.RequiresApiKey ? "Hazır · anahtar geçerli" : "Hazır · servis erişilebilir",
                 ProviderState.InvalidKey => "Anahtar geçersiz",
                 ProviderState.QuotaExceeded => "Kota doldu · daha sonra tekrar dene",
                 ProviderState.Unreachable => "Servise ulaşılamıyor",
@@ -174,11 +180,12 @@ public sealed class SettingsViewModel : ObservableObject
         $"Tek analizde en fazla {AppLimits.MaxTextChars:N0} karakter · dosya en fazla {AppLimits.MaxFileBytes / (1024 * 1024)} MB · istek zaman aşımı {AppLimits.RequestTimeout.TotalSeconds:0} sn";
 
     public string FallbackText =>
-        "Ana sağlayıcı kota, anahtar veya erişim hatası verirse ve yedek sağlayıcı için de anahtar girdiysen, " +
-        "metin yedek sağlayıcıya gönderilmeden önce her seferinde onayın istenir. Aynı metin asla aynı anda iki servise gönderilmez.";
+        "Uygulama hiçbir ayar gerektirmeden ücretsiz ve anahtarsız Pollinations servisiyle çalışır. " +
+        "İstersen daha yüksek kota ve kalite için kendi ücretsiz Gemini veya Groq anahtarını ekleyebilirsin; o zaman önce onlar kullanılır. " +
+        "Bir sağlayıcı kota, anahtar veya erişim hatası verirse metin bir sonrakine gönderilmeden önce her seferinde onayın istenir. Aynı metin asla aynı anda iki servise gönderilmez.";
 
     public string PrivacyText =>
-        "• Analiz için metin, seçtiğin yapay zekâ sağlayıcısına (üçüncü taraf) internet üzerinden gönderilir.\n" +
+        "• Analiz için metin, yapay zekâ sağlayıcısına (üçüncü taraf) internet üzerinden gönderilir. Varsayılan sağlayıcı anahtarsız Pollinations.ai'dir; anahtar girersen Gemini veya Groq kullanılır.\n" +
         "• Göndermeden önce cihazında otomatik anonimleştirme yapılır: e-posta, telefon, T.C. kimlik no, IBAN, kart numarası, açık adres kalıpları ve kişisel profil bağlantıları maskelenir.\n" +
         "• Otomatik anonimleştirme her kişisel bilgiyi yakalayamaz (ör. isimler, serbest yazılmış adresler). Hassas bilgileri metinden kendin çıkar.\n" +
         "• Analiz geçmişi tutulmaz. Metinler ve sonuçlar yalnızca bellekte tutulur, diske yazılmaz; yeni analizde, Temizle'de ve uygulama kapanınca silinir.\n" +

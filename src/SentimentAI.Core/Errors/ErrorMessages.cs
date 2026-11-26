@@ -26,7 +26,7 @@ public static class ErrorMessages
         ErrorKind.MissingApiKey => new(
             "API anahtarı gerekli",
             "Henüz hiçbir yapay zekâ sağlayıcısı için API anahtarı girilmemiş.",
-            "Ayarlar → API Yapılandırması bölümünden ücretsiz bir Gemini veya Groq anahtarı ekle."),
+            "Ayarlar → API yapılandırması bölümünden ücretsiz bir Gemini veya Groq anahtarı ekle."),
 
         ErrorKind.InvalidApiKey => new(
             "API anahtarı geçersiz",

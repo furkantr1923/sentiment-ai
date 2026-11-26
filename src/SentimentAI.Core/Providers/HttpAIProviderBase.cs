@@ -44,12 +44,14 @@ public abstract class HttpAIProviderBase : IAIProvider
 
     public string ModelName => _activeModel ?? Models[0];
 
-    public bool IsConfigured => !string.IsNullOrWhiteSpace(_keys.Get(Id));
+    public virtual bool RequiresApiKey => true;
+
+    public bool IsConfigured => !RequiresApiKey || !string.IsNullOrWhiteSpace(_keys.Get(Id));
 
     public async Task<AnalysisResult> AnalyzeAsync(string anonymizedText, CancellationToken cancellationToken)
     {
-        var key = _keys.Get(Id);
-        if (string.IsNullOrWhiteSpace(key))
+        var key = _keys.Get(Id) ?? "";
+        if (RequiresApiKey && string.IsNullOrWhiteSpace(key))
             throw new AnalysisException(ErrorKind.MissingApiKey, null, Id);
 
         AnalysisException? last = null;
@@ -59,7 +61,7 @@ public abstract class HttpAIProviderBase : IAIProvider
         {
             try
             {
-                var content = await RequestAnalysisAsync(key!, model, anonymizedText, cancellationToken).ConfigureAwait(false);
+                var content = await RequestAnalysisAsync(key, model, anonymizedText, cancellationToken).ConfigureAwait(false);
                 var result = AnalysisParser.Parse(content, DisplayName, model);
                 _activeModel = model;
                 return result;
@@ -79,16 +81,16 @@ public abstract class HttpAIProviderBase : IAIProvider
 
     public async Task<ProviderStatus> GetProviderStatusAsync(CancellationToken cancellationToken)
     {
-        var key = _keys.Get(Id);
-        if (string.IsNullOrWhiteSpace(key))
+        var key = _keys.Get(Id) ?? "";
+        if (RequiresApiKey && string.IsNullOrWhiteSpace(key))
             return Status(ProviderState.NotConfigured, "API anahtarı girilmemiş.");
 
         try
         {
-            using var request = BuildStatusRequest(key!);
+            using var request = BuildStatusRequest(key);
             using var response = await SendAsync(request, AppLimits.StatusTimeout, cancellationToken).ConfigureAwait(false);
             if (ProviderErrorClassifier.IsSuccess(response.StatusCode))
-                return Status(ProviderState.Ready, "Anahtar geçerli, servis erişilebilir.");
+                return Status(ProviderState.Ready, RequiresApiKey ? "Anahtar geçerli, servis erişilebilir." : "Servis erişilebilir.");
 
             var body = await SafeReadAsync(response, cancellationToken).ConfigureAwait(false);
             var error = ProviderErrorClassifier.FromStatus((int)response.StatusCode, body, Id);

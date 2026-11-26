@@ -82,6 +82,22 @@ await Run("İroni tespiti (gerçek API)", async () =>
     return $"ironi {(r.Irony.Detected ? "var" : "yok")} (%{r.Irony.Score}), sarkazm %{r.Sarcasm.Score}, temel duygu {AnalysisResult.PolarityLabel(r.Polarity)}";
 });
 
+// Anahtarsız ücretsiz sağlayıcı: her derlemede gerçek analiz
+await Run("Pollinations (anahtarsız): gerçek Türkçe analiz", async () =>
+{
+    var r = await new PollinationsProvider(http, new EnvKeyStore("yok", null)).AnalyzeAsync(sample, CancellationToken.None);
+    if (r.Emotions.Count < 5) throw new InvalidOperationException("Duygu listesi eksik.");
+    return Describe(r);
+});
+
+await Task.Delay(TimeSpan.FromSeconds(16)); // anonim katman: ~15 sn'de 1 istek
+
+await Run("Pollinations (anahtarsız): ironi tespiti", async () =>
+{
+    var r = await new PollinationsProvider(http, new EnvKeyStore("yok", null)).AnalyzeAsync(ironic, CancellationToken.None);
+    return $"ironi {(r.Irony.Detected ? "var" : "yok")} (%{r.Irony.Score}), sarkazm %{r.Sarcasm.Score}, temel duygu {AnalysisResult.PolarityLabel(r.Polarity)}, yazım önerisi {r.SpellingIssues.Count}";
+});
+
 // 3–4: Geçersiz anahtar (anahtar gerektirmez, gerçek sunucuya gider)
 await Run("Gemini: geçersiz API anahtarı", () =>
 {

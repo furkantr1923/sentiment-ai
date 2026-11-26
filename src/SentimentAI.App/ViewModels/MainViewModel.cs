@@ -139,8 +139,8 @@ public sealed class MainViewModel : ObservableObject
         get
         {
             var configured = _analysis.Providers.Where(p => p.IsConfigured).ToList();
-            if (configured.Count == 0) return "API anahtarı gerekli";
-            return configured.Count == 1 ? configured[0].DisplayName : $"{configured[0].DisplayName} + yedek";
+            if (configured.Count == 0) return "Sağlayıcı yok";
+            return configured.Count == 1 ? configured[0].DisplayName : $"{configured[0].DisplayName} + {configured.Count - 1} yedek";
         }
     }
 

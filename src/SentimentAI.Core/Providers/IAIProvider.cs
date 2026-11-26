@@ -20,8 +20,11 @@ public interface IAIProvider
     /// <summary>Ücretsiz API anahtarının alınabileceği adres.</summary>
     string KeyHelpUrl { get; }
 
-    /// <summary>Kullanıcı bu sağlayıcı için anahtar girmiş mi?</summary>
+    /// <summary>Sağlayıcı kullanıma hazır mı? (anahtar gerekiyorsa girilmiş mi)</summary>
     bool IsConfigured { get; }
+
+    /// <summary>Bu sağlayıcı API anahtarı istiyor mu? (anahtarsız ücretsiz servislerde false)</summary>
+    bool RequiresApiKey => true;
 
     /// <summary>Metni analiz eder. Metin önceden doğrulanmış ve anonimleştirilmiş olmalıdır.</summary>
     Task<AnalysisResult> AnalyzeAsync(string anonymizedText, CancellationToken cancellationToken);

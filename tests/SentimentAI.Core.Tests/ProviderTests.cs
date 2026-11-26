@@ -331,3 +331,62 @@ public class AnalysisServiceTests
         Assert.Equal(0, a.Calls);
     }
 }
+
+/// <summary>Anahtarsız ücretsiz sağlayıcı (Pollinations).</summary>
+public class PollinationsProviderTests
+{
+    private static PollinationsProvider Create(StubHandler h) => new(new StubHttpClientFactory(h), new InMemoryKeyStore());
+
+    [Fact]
+    public async Task Anahtar_olmadan_hazir_ve_analiz_yapar()
+    {
+        var h = new StubHandler().Respond(HttpStatusCode.OK, Samples.GroqEnvelope(Samples.ValidJson));
+        var p = Create(h);
+
+        Assert.True(p.IsConfigured);
+        Assert.False(p.RequiresApiKey);
+        var r = await p.AnalyzeAsync("Harika bir gün!", CancellationToken.None);
+
+        Assert.Equal(Polarity.Positive, r.Polarity);
+        Assert.Null(h.Requests[0].Headers.Authorization); // gömülü anahtar yok
+        Assert.Contains("text.pollinations.ai", h.Requests[0].RequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task Ilk_uc_nokta_kapaliysa_ikinci_ag_gecidi_denenir()
+    {
+        var h = new StubHandler()
+            .Respond(HttpStatusCode.NotFound, "{}")
+            .Respond(HttpStatusCode.OK, Samples.GroqEnvelope(Samples.ValidJson));
+        var r = await Create(h).AnalyzeAsync("metin", CancellationToken.None);
+
+        Assert.Equal(2, h.Requests.Count);
+        Assert.Contains("gen.pollinations.ai", h.Requests[1].RequestUri!.ToString());
+        Assert.Equal(Polarity.Positive, r.Polarity);
+    }
+
+    [Fact]
+    public async Task Anonim_sinir_anlasilir_kota_hatasi_verir()
+    {
+        var h = new StubHandler().Respond((HttpStatusCode)429, "{}");
+        var ex = await Assert.ThrowsAsync<AnalysisException>(() => Create(h).AnalyzeAsync("metin", CancellationToken.None));
+        Assert.Equal(ErrorKind.QuotaExceeded, ex.Kind);
+        Assert.Contains("15 saniye", ex.Detail);
+    }
+
+    [Fact]
+    public async Task Hicbir_anahtar_yokken_anahtarsiz_saglayici_dogrudan_kullanilir()
+    {
+        var h = new StubHandler().Respond(HttpStatusCode.OK, Samples.GroqEnvelope(Samples.ValidJson));
+        var keys = new InMemoryKeyStore();
+        var http = new StubHttpClientFactory(h);
+        var service = new AnalysisService(
+            [new GeminiProvider(http, keys), new GroqProvider(http, keys), new PollinationsProvider(http, keys)],
+            new FakeNetwork(), retryDelay: TimeSpan.Zero);
+
+        var outcome = await service.AnalyzeAsync("Ürün çok güzel, teşekkürler.", _ => Task.FromResult(false), CancellationToken.None);
+
+        Assert.False(outcome.UsedFallback); // onay sorulmadan, ilk ve tek hazır sağlayıcı
+        Assert.Equal("Pollinations (ücretsiz)", outcome.Result.ProviderName);
+    }
+}

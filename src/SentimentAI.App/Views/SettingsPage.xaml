@@ -33,7 +33,7 @@
                                         <Label Text="{Binding RoleText}" Style="{StaticResource Caption}" />
                                     </VerticalStackLayout>
                                     <Button Grid.Column="1" Text="Ücretsiz anahtar al ↗" Style="{StaticResource GhostButton}"
-                                            Command="{Binding GetKeyCommand}" VerticalOptions="Center" />
+                                            Command="{Binding GetKeyCommand}" VerticalOptions="Center" IsVisible="{Binding ShowKeyControls}" />
                                 </Grid>
 
                                 <HorizontalStackLayout Spacing="8">
@@ -42,14 +42,14 @@
                                     <ActivityIndicator IsRunning="{Binding IsChecking}" IsVisible="{Binding IsChecking}" HeightRequest="16" WidthRequest="16" />
                                 </HorizontalStackLayout>
 
-                                <Entry Text="{Binding KeyInput}" Placeholder="{Binding KeyPlaceholder}" IsPassword="True"
+                                <Entry Text="{Binding KeyInput}" Placeholder="{Binding KeyPlaceholder}" IsPassword="True" IsVisible="{Binding ShowKeyControls}"
                                        IsSpellCheckEnabled="False" IsTextPredictionEnabled="False" ClearButtonVisibility="WhileEditing" />
 
                                 <FlexLayout Wrap="Wrap" JustifyContent="Start">
                                     <Button Text="Kaydet ve test et" Style="{StaticResource PrimaryButton}" FontSize="14" MinimumHeightRequest="42"
-                                            Command="{Binding SaveCommand}" Margin="0,0,8,8" />
+                                            Command="{Binding SaveCommand}" Margin="0,0,8,8" IsVisible="{Binding ShowKeyControls}" />
                                     <Button Text="Test et" Style="{StaticResource GhostButton}" Command="{Binding TestCommand}" Margin="0,0,8,8" />
-                                    <Button Text="Anahtarı sil" Style="{StaticResource GhostButton}" Command="{Binding RemoveCommand}" Margin="0,0,8,8" />
+                                    <Button Text="Anahtarı sil" Style="{StaticResource GhostButton}" Command="{Binding RemoveCommand}" Margin="0,0,8,8" IsVisible="{Binding ShowKeyControls}" />
                                 </FlexLayout>
 
                                 <Label Text="{Binding ModelText}" Style="{StaticResource Caption}" />
