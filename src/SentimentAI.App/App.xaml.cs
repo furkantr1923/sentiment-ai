@@ -22,8 +22,11 @@ public partial class App : Application
         cleaner.Clean("açılış"); // önceki oturumdan kalmış olabilecek geçici dosyalar
         cleaner.WriteSelfTestMarkerIfRequested();
 
-        // Platforma özgü ayrı arayüz düzenleri, ortak ViewModel
-        Page root = DeviceInfo.Current.Idiom == DeviceIdiom.Desktop
+        // Platforma özgü ayrı arayüz düzenleri, ortak ViewModel.
+        // Not: Düzen cihaz türüne (Idiom) göre değil platforma göre seçilir; dokunmatik Windows
+        // cihazları "Tablet" olarak raporlanabildiği için Windows'ta her zaman masaüstü düzeni kullanılır.
+        bool isWindows = DeviceInfo.Current.Platform == DevicePlatform.WinUI;
+        Page root = isWindows
             ? _services.GetRequiredService<DesktopMainPage>()
             : _services.GetRequiredService<MobileMainPage>();
 
@@ -32,7 +35,7 @@ public partial class App : Application
             Title = "SENTIMENT AI",
         };
 
-        if (DeviceInfo.Current.Idiom == DeviceIdiom.Desktop)
+        if (isWindows)
         {
             window.MinimumWidth = 980;
             window.MinimumHeight = 640;

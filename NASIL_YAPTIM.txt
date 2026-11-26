@@ -1,0 +1,203 @@
+=====================================================================
+  SENTIMENT AI — NASIL YAPTIM?
+  Türkçe Metinlerin Duygu ve Anlam Analizi · Geliştirici: Furkan
+=====================================================================
+
+Bu dosya, "Bu projeyi nasıl yaptın?" sorusuna adım adım, sade bir dille
+cevap vermek için hazırlandı. Mülakatta veya sunumda anlatırken bu sırayı
+takip edebilirsin.
+
+---------------------------------------------------------------------
+1) PROJE NE YAPIYOR? (30 saniyelik özet)
+---------------------------------------------------------------------
+Kullanıcı Türkçe bir metin yazıyor ya da dosyadan (TXT, PDF, DOCX, CSV,
+XLSX) bir parça seçiyor. Uygulama bu metni yapay zekâ ile analiz edip:
+  - baskın duyguyu ve tahmini güven yüzdesini,
+  - pozitif / negatif / nötr dağılımını,
+  - 11+ duygunun puanını ve duygu yoğunluğunu,
+  - konu, amaç, hedef kitle tahmini ve kısa özeti,
+  - anahtar kelimeleri ve kelime bulutunu,
+  - ironi, sarkazm, alay ve mizah tespitini,
+  - yazım/dilbilgisi hatalarını ve düzeltilmiş metni,
+  - anlatım önerilerini
+grafiklerle gösteriyor. Windows (Setup + Portable) ve Android (APK)
+olarak çalışıyor.
+
+---------------------------------------------------------------------
+2) HANGİ TEKNOLOJİLERİ NEDEN SEÇTİM?
+---------------------------------------------------------------------
+- C# + .NET 10 (LTS): Uzun süre desteklenen güncel sürüm.
+- .NET MAUI: Tek kod tabanıyla hem Windows hem Android uygulaması.
+- MVVM mimarisi: Ekran (View) ile mantık (ViewModel) birbirinden ayrı.
+  Böylece Windows ve Android için FARKLI ekran tasarımı yapıp AYNI
+  ViewModel'i kullandım.
+- Dependency Injection: Servisleri (API, ağ durumu, anahtar deposu)
+  MauiProgram.cs içinde tek yerden kaydettim; sınıflar birbirine sıkı
+  bağlı değil, test etmesi kolay.
+- HttpClientFactory: HTTP bağlantılarını doğru yönetmek için.
+- async/await: Ağ ve dosya işlemleri arayüzü dondurmasın diye.
+- Yalnızca 3 NuGet paketi: MAUI, Microsoft.Extensions.Http ve PdfPig.
+  Grafik ve MVVM için ek kütüphane kullanmadım; uygulama hafif kaldı.
+
+---------------------------------------------------------------------
+3) PROJE YAPISI
+---------------------------------------------------------------------
+src/SentimentAI.Core   -> Arayüzden bağımsız beyin kısmı
+   Analysis/  : Analiz akışı, yapay zekâya giden talimat (prompt),
+                gelen JSON'u okuyan ayrıştırıcı
+   Providers/ : Gemini ve Groq bağlantıları, ortak IAIProvider arayüzü,
+                hata sınıflandırma
+   Privacy/   : Kişisel veri maskeleme (anonimleştirme)
+   Files/     : Dosyalardan metin çıkarma
+   Errors/    : Hata türleri ve Türkçe hata mesajları
+src/SentimentAI.App    -> .NET MAUI uygulaması (ekranlar, grafikler)
+tests/                 -> Birim, entegrasyon ve canlı API testleri
+tools/PortableLauncher -> Tek dosyalık Portable EXE başlatıcısı
+installer/             -> Windows Setup.exe betiği (Inno Setup)
+.github/workflows      -> Otomatik derleme, test ve yayın (CI/CD)
+
+---------------------------------------------------------------------
+4) YAPAY ZEKÂ KISMI NASIL ÇALIŞIYOR?
+---------------------------------------------------------------------
+- Sahte sonuç YOK. Gerçek API çağrısı yapılıyor.
+- Ana sağlayıcı Google Gemini, yedek sağlayıcı Groq. İkisinin de ücretsiz
+  katmanı var, kredi kartı istemiyor.
+- Her sağlayıcı aynı arayüzü (IAIProvider) uyguluyor:
+  AnalyzeAsync, IsAvailableAsync, GetProviderStatusAsync.
+  Yarın yeni bir sağlayıcı eklemek için sadece yeni bir sınıf yazmak yeter.
+- Yapay zekâya "sadece şu JSON şemasında cevap ver" diye talimat veriyorum
+  (PromptBuilder). Gemini'de responseMimeType=application/json, Groq'ta
+  response_format=json_object ile JSON çıktısını zorunlu tutuyorum.
+- Gelen cevabı AnalysisParser okuyor. Zorunlu alan eksikse sonucu
+  uydurmuyor, "Geçersiz yanıt" hatası veriyor.
+- Model adları için "gemini-flash-latest" gibi takma adlar kullandım;
+  model emekli olursa (404) aynı sağlayıcının yedek modeline geçiyor.
+- API anahtarı kodda YOK. Kullanıcı Ayarlar'dan giriyor; anahtar
+  Android Keystore / Windows DPAPI ile şifreli saklanıyor.
+
+---------------------------------------------------------------------
+5) HATA YÖNETİMİ VE YEDEK SAĞLAYICIYA GEÇİŞ
+---------------------------------------------------------------------
+HTTP cevap kodlarını hata türlerine çevirdim:
+  401/403 -> API anahtarı geçersiz      429 -> Kota doldu
+  5xx     -> Sağlayıcıya ulaşılamıyor   zaman aşımı -> Timeout
+Kurallar:
+  - Geçici ağ hatasında sadece 1 kez yeniden deniyor (sonsuz deneme yok).
+  - Kota dolunca (429) tekrar denemiyor; rate limit zorlanmıyor.
+  - Yedek sağlayıcıya geçmeden önce kullanıcıya "metin şu servise
+    gönderilecek, onaylıyor musun?" diye soruyor.
+  - Aynı metin asla aynı anda iki servise gönderilmiyor.
+Her hata kullanıcıya 3 parça olarak gösteriliyor: ne oldu, neden olmuş
+olabilir, ne yapabilirsin.
+
+---------------------------------------------------------------------
+6) GİZLİLİK
+---------------------------------------------------------------------
+- Metin API'ye gitmeden ÖNCE cihazda maskeleniyor: e-posta, telefon,
+  T.C. kimlik no (kontrol hanesi algoritmasıyla doğrulanıyor), IBAN,
+  kart numarası (Luhn algoritması), açık adres kalıpları.
+  Örn: "ali@ornek.com" -> "[E-POSTA]"
+- Analiz geçmişi yok, dışa aktarma yok, toplu analiz yok.
+- Metin ve sonuç sadece bellekte; diske ve loglara hiç yazılmıyor.
+- Uygulama kapanınca bellek ve geçici dosyalar temizleniyor.
+- Gizlilik açıklamasında anonimleştirmenin her şeyi yakalayamayacağını
+  açıkça yazdım.
+
+---------------------------------------------------------------------
+7) DOSYA OKUMA
+---------------------------------------------------------------------
+- TXT: UTF-8 ve eski Türkçe (Windows-1254) kodlamasını tanıyor.
+- PDF: PdfPig kütüphanesiyle sayfa sayfa metin çıkarıyor.
+- DOCX / XLSX: Bunlar aslında ZIP içinde XML dosyaları. Ağır bir kütüphane
+  yerine kendi hafif okuyucumu yazdım (güvenlik için DTD kapalı, boyut
+  sınırı var).
+- CSV: Ayırıcıyı (; , sekme) otomatik buluyor, tırnaklı alanları doğru
+  okuyor.
+- Dosyanın tamamı gönderilmiyor; uzun metin 2.000 karakterlik parçalara
+  bölünüyor ve kullanıcı TEK parça seçiyor.
+- Bozuk, şifreli, çok büyük (>10 MB) dosyalar için anlaşılır hata var.
+
+---------------------------------------------------------------------
+8) ARAYÜZ
+---------------------------------------------------------------------
+- Renkler: siyah/antrasit zemin, mor ana vurgu, neon pembe ikinci vurgu.
+- Windows: iki sütunlu geniş ekran. Solda metin girişi, sağda sonuçlar.
+- Android: tek elle kullanım için Temizle / Dosya / Analiz Et butonları
+  ekranın altında sabit. Klavye açılınca da görünür kalıyor.
+- Grafikler (halka, çubuk, gösterge, kelime bulutu) ek kütüphane olmadan
+  Microsoft.Maui.Graphics ile çizildi. Her analizde sadece bir kez
+  oluşturuluyor; sürekli çalışan animasyon yok.
+- Analiz sırasında mor-pembe "belirsiz" ilerleme çubuğu var. Sahte yüzde
+  göstermiyor; iş bitince veya hata olunca duruyor. Analiz sürerken buton
+  kilitleniyor, aynı metin tekrar gönderilemiyor.
+- Güven düşükse sarı uyarı çıkıyor. Hedef kitle, amaç ve ironi
+  "tahmin" olarak işaretli.
+
+---------------------------------------------------------------------
+9) TESTLER
+---------------------------------------------------------------------
+- Birim testleri: metin doğrulama, anonimleştirme, JSON ayrıştırma,
+  hata sınıflandırma, sağlayıcı geçiş mantığı, dosya okuma, geçici veri
+  temizliği.
+- Entegrasyon testleri: Sahte bir HTTP sunucusuyla geçersiz anahtar,
+  kota dolması, ağ kesilmesi, zaman aşımı, bozuk JSON, model bulunamadı.
+- Canlı API testleri: Gerçek Gemini ve Groq sunucularına istek atıyor.
+  Anahtar gerektirmeyen testler (geçersiz anahtar, zaman aşımı) her
+  derlemede gerçek sunucuya karşı çalışıyor.
+- Windows testleri: Uygulamanın açılması, Setup kurulumu ve kaldırma,
+  Portable açılışı, kapanışta geçici veri temizliği.
+- Android testleri: Emülatörde APK kurulumu, açılış, çökme kontrolü,
+  klavye açıkken butonun görünmesi.
+- Dürüstlük notu: Testler GitHub Actions sanal makinelerinde ve Android
+  emülatöründe yapıldı. Gerçek telefonda test edilmedi; bunu raporda
+  açıkça yazdım.
+
+---------------------------------------------------------------------
+10) DERLEME VE DAĞITIM (CI/CD)
+---------------------------------------------------------------------
+GitHub'a her kod gönderiminde GitHub Actions otomatik olarak:
+  1. Testleri çalıştırıyor.
+  2. Android APK'yı derleyip imzalıyor.
+  3. Windows uygulamasını bağımsız (self-contained) yayımlıyor; kullanıcının
+     ayrıca .NET kurmasına gerek yok.
+  4. Inno Setup ile SENTIMENT-AI-Setup.exe üretiyor.
+  5. Uygulamayı tek bir SENTIMENT-AI-Portable.exe içine gömüyor.
+     İlk açılışta kendini açıp çalıştırıyor, kurulum istemiyor.
+  6. Windows ve Android'de duman testleri yapıp ekran görüntüsü alıyor.
+  7. Tüm dosyaları GitHub Releases sayfasına yüklüyor.
+
+---------------------------------------------------------------------
+11) KARŞILAŞTIĞIM SORUNLAR VE ÇÖZÜMLERİ
+---------------------------------------------------------------------
+- PDF kütüphanesinin NuGet paket adı "PdfPig" çıktı (ad alanı
+  UglyToad.PdfPig). Derleme hatasından bulup düzelttim.
+- CI'da Windows hedefini ayrı derlemek için "TargetFrameworks" değerini
+  dışarıdan verince alt projeye de geçti ve bozdu. Kendi özelliğimi
+  (WindowsOnly) tanımlayarak çözdüm.
+- Android 15'te zorunlu kenardan kenara düzen klavye davranışını
+  değiştiriyor. targetSdkVersion 34 + adjustResize ile klavye açılınca
+  butonların görünür kalmasını sağladım.
+- Ana iş parçacığında async kod beklemek kilitlenmeye yol açabiliyordu;
+  anahtar yüklemeyi Task.Run ile arka plana aldım.
+
+---------------------------------------------------------------------
+12) "NEDEN BÖYLE YAPTIN?" SORULARINA KISA CEVAPLAR
+---------------------------------------------------------------------
+S: Neden iki sağlayıcı?
+C: Ücretsiz kota dolarsa uygulama çalışmaya devam etsin diye. Ama gizlilik
+   için yedeğe geçmeden önce kullanıcı onayı alıyorum.
+
+S: Güven yüzdesi kesin mi?
+C: Hayır. Modelin kendi tahmini; istatistiksel olarak kalibre edilmiş
+   değil. Ekranda "tahmini model güveni" yazıyor.
+
+S: Neden metin sınırı 2.000 karakter?
+C: Ücretsiz katmandaki dakikalık token sınırına sığmak, hızlı cevap almak
+   ve tek bir kısa metne odaklanmak için. Sınır AppLimits.cs dosyasından
+   tek yerden değişiyor.
+
+S: Neden kendi DOCX/XLSX okuyucunu yazdın?
+C: Open XML SDK uygulamaya ~6 MB ekliyordu. Bize sadece metin lazımdı;
+   ZIP + XmlReader ile hafif ve güvenli bir okuyucu yeterli oldu.
+
+=====================================================================

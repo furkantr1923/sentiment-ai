@@ -58,7 +58,7 @@ flowchart LR
 
 - **SentimentAI.Core** — arayüzden bağımsız iş mantığı (sağlayıcılar, ayrıştırıcı, anonimleştirme, dosya okuma)
 - **SentimentAI.App** — .NET MAUI; Windows ve Android için **ayrı sayfa düzenleri**, ortak ViewModel
-- **tests/** — birim + entegrasyon testleri ve gerçek API sunucularına karşı canlı testler
+- **tests/** — 89 birim + entegrasyon testi ve gerçek API sunucularına karşı canlı testler
 
 Ayrıntı: [docs/MIMARI.md](docs/MIMARI.md)
 
