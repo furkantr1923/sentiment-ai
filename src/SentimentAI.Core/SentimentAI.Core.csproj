@@ -17,7 +17,7 @@
     <!-- HttpClientFactory: yönetilen HTTP istemcileri -->
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0" />
     <!-- PDF metin çıkarımı (saf .NET, yerel kod yok) -->
-    <PackageReference Include="UglyToad.PdfPig" Version="0.1.10" />
+    <PackageReference Include="PdfPig" Version="0.1.10" />
   </ItemGroup>
 
   <ItemGroup>
