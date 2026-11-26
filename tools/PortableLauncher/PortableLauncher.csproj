@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SENTIMENT-AI-Portable.exe: kurulum gerektirmeyen tek dosyalık başlatıcı.
+    Windows 10/11'de yerleşik .NET Framework 4.8 ile çalışır (ek çalışma zamanı gerekmez).
+    Derleme sırasında uygulama klasörü (payload.zip) exe'nin içine gömülür; ilk açılışta
+    %LOCALAPPDATA%\SENTIMENT-AI\Portable\<sürüm> altına açılır ve sonraki açılışlarda doğrudan çalışır.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <AssemblyName>SENTIMENT-AI-Portable</AssemblyName>
+    <RootNamespace>SentimentAI.PortableLauncher</RootNamespace>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <ApplicationIcon>..\..\installer\appicon.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <AssemblyTitle>SENTIMENT AI Portable</AssemblyTitle>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(PayloadZip)' != ''">
+    <EmbeddedResource Include="$(PayloadZip)" LogicalName="payload.zip" />
+  </ItemGroup>
+
+</Project>

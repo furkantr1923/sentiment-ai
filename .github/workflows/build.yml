@@ -1,0 +1,216 @@
+# SENTIMENT AI — testler, Windows (Setup + Portable + zip) ve Android (APK) derlemesi, GitHub Release.
+name: build
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['**.md', 'docs/**', 'NASIL_YAPTIM.txt']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  APP_VERSION: 1.0.0
+  DOTNET_VERSION: 10.0.x
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  # ------------------------------------------------------------------ testler
+  test:
+    name: Birim + entegrasyon testleri
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: '${{ env.DOTNET_VERSION }}' }
+      - name: Birim ve entegrasyon testleri (sahte sunucu)
+        run: |
+          mkdir -p reports
+          set -o pipefail
+          dotnet test tests/SentimentAI.Core.Tests -c Release --logger "console;verbosity=normal" 2>&1 | tee reports/unit-tests.txt
+      - name: Canlı API testleri (gerçek sunucular)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: dotnet run --project tests/SentimentAI.LiveTests -c Release -- reports/live-api-tests.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: reports-tests, path: reports }
+
+  # ------------------------------------------------------------------ Android
+  android:
+    name: Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: '${{ env.DOTNET_VERSION }}' }
+      - name: MAUI Android iş yükü
+        run: dotnet workload install maui-android
+      - name: Android SDK bileşenleri
+        continue-on-error: true
+        run: dotnet build src/SentimentAI.App/SentimentAI.App.csproj -t:InstallAndroidDependencies -f net10.0-android -p:AndroidSdkDirectory=$ANDROID_HOME -p:AcceptAndroidSDKLicenses=True
+      - name: İmza anahtarı
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          KS="$RUNNER_TEMP/release.keystore"
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$KS"; PASS="$KEYSTORE_PASS"
+          else
+            echo "::warning::ANDROID_KEYSTORE_BASE64 tanımlı değil; APK bu derlemeye özel anahtarla imzalanıyor."
+            PASS=$(openssl rand -hex 16)
+            keytool -genkeypair -v -keystore "$KS" -alias sentimentai -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass "$PASS" -keypass "$PASS" -dname "CN=Furkan, O=SENTIMENT AI, C=TR"
+          fi
+          echo "::add-mask::$PASS"
+          echo "KS_PATH=$KS" >> $GITHUB_ENV
+          echo "KS_PASS=$PASS" >> $GITHUB_ENV
+      - name: APK derle (arm64 + arm)
+        run: |
+          dotnet publish src/SentimentAI.App/SentimentAI.App.csproj -f net10.0-android -c Release -o out/android \
+            -p:ApplicationDisplayVersion=$APP_VERSION -p:ApplicationVersion=${{ github.run_number }} \
+            -p:AndroidKeyStore=true -p:AndroidSigningKeyStore=$KS_PATH -p:AndroidSigningKeyAlias=sentimentai \
+            -p:AndroidSigningKeyPass=env:KS_PASS -p:AndroidSigningStorePass=env:KS_PASS
+          mkdir -p dist
+          cp "$(ls out/android/*-Signed.apk | head -1)" dist/SENTIMENT-AI.apk
+      - name: APK doğrula
+        run: |
+          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          mkdir -p reports
+          { echo "SENTIMENT-AI.apk — $(du -h dist/SENTIMENT-AI.apk | cut -f1)"; "$BT/apksigner" verify --print-certs dist/SENTIMENT-AI.apk; "$BT/aapt2" dump badging dist/SENTIMENT-AI.apk | grep -E "^(package|sdkVersion|targetSdkVersion|application-label|native-code)"; } | tee reports/android-build.txt
+      - name: Emülatör test APK'sı (x86_64)
+        run: |
+          dotnet publish src/SentimentAI.App/SentimentAI.App.csproj -f net10.0-android -c Release -o out/android-x64 \
+            -p:RuntimeIdentifiers=android-x64 -p:ApplicationDisplayVersion=$APP_VERSION \
+            -p:AndroidKeyStore=true -p:AndroidSigningKeyStore=$KS_PATH -p:AndroidSigningKeyAlias=sentimentai \
+            -p:AndroidSigningKeyPass=env:KS_PASS -p:AndroidSigningStorePass=env:KS_PASS
+          cp "$(ls out/android-x64/*-Signed.apk | head -1)" dist-x64.apk
+      - uses: actions/upload-artifact@v4
+        with: { name: android, path: dist }
+      - uses: actions/upload-artifact@v4
+        with: { name: android-x64, path: dist-x64.apk }
+      - uses: actions/upload-artifact@v4
+        with: { name: reports-android, path: reports }
+
+  android-test:
+    name: Android emülatör testi
+    runs-on: ubuntu-latest
+    needs: android
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { name: android-x64 }
+      - name: KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          script: bash .github/scripts/android-smoke.sh dist-x64.apk
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: reports-android-test, path: reports }
+
+  # ------------------------------------------------------------------ Windows
+  windows:
+    name: Windows (Setup + Portable)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: '${{ env.DOTNET_VERSION }}' }
+      - name: MAUI Windows iş yükü
+        run: dotnet workload install maui-windows
+      - name: Uygulamayı yayımla (paketsiz, bağımsız, x64)
+        shell: pwsh
+        run: |
+          dotnet publish src/SentimentAI.App/SentimentAI.App.csproj -c Release `
+            -f net10.0-windows10.0.19041.0 -p:TargetFrameworks=net10.0-windows10.0.19041.0 `
+            -p:RuntimeIdentifierOverride=win-x64 -p:WindowsPackageType=None `
+            -p:WindowsAppSDKSelfContained=true -p:SelfContained=true `
+            -p:ApplicationDisplayVersion=$env:APP_VERSION -o out/win
+          if (!(Test-Path out/win/SentimentAI.exe)) { throw "SentimentAI.exe üretilmedi" }
+      - name: Windows klasör paketi (zip)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Copy-Item out/win "$env:RUNNER_TEMP/SENTIMENT-AI" -Recurse
+          Compress-Archive -Path "$env:RUNNER_TEMP/SENTIMENT-AI" -DestinationPath dist/SENTIMENT-AI-Windows-x64.zip -CompressionLevel Optimal
+      - name: Setup.exe (Inno Setup)
+        shell: pwsh
+        run: |
+          $iscc = (Get-Command iscc -ErrorAction SilentlyContinue).Source
+          if (-not $iscc) { choco install innosetup -y --no-progress | Out-Null; $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" }
+          & $iscc "/DAppVersion=$env:APP_VERSION" "/DSourceDir=$PWD\out\win" "/DOutputDir=$PWD\dist" installer\SentimentAI.iss
+          if (!(Test-Path dist/SENTIMENT-AI-Setup.exe)) { throw "Setup.exe üretilmedi" }
+      - name: Portable.exe (tek dosya)
+        shell: pwsh
+        run: |
+          Compress-Archive -Path out/win/* -DestinationPath "$env:RUNNER_TEMP/payload.zip" -CompressionLevel Optimal
+          dotnet build tools/PortableLauncher/PortableLauncher.csproj -c Release -p:PayloadZip="$env:RUNNER_TEMP/payload.zip" -p:Version=$env:APP_VERSION -o out/portable
+          Copy-Item out/portable/SENTIMENT-AI-Portable.exe dist/
+      - name: Windows testleri (açılış, Setup kurulumu, Portable, geçici veri temizliği)
+        continue-on-error: true
+        shell: pwsh
+        run: .github/scripts/windows-smoke.ps1
+      - uses: actions/upload-artifact@v4
+        with: { name: windows, path: dist }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: reports-windows, path: reports }
+
+  # ------------------------------------------------------------------ Release
+  release:
+    name: GitHub Release
+    runs-on: ubuntu-latest
+    needs: [test, android, windows, android-test]
+    if: always() && needs.android.result == 'success' && needs.windows.result == 'success'
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: art }
+      - name: Dosyaları topla
+        run: |
+          mkdir -p release
+          cp art/android/SENTIMENT-AI.apk art/windows/* release/
+          for d in art/reports-*; do [ -d "$d" ] && cp -r "$d"/. release/ 2>/dev/null || true; done
+          cd release && zip -q test-raporlari.zip *.txt *.png 2>/dev/null || true
+          ls -la
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.APP_VERSION }}
+          name: SENTIMENT AI v${{ env.APP_VERSION }}
+          body: |
+            **SENTIMENT AI** — Türkçe Metinlerin Duygu ve Anlam Analizi · Geliştirici: Furkan
+
+            | Dosya | Açıklama |
+            |---|---|
+            | `SENTIMENT-AI-Setup.exe` | Windows 10/11 kurulum |
+            | `SENTIMENT-AI-Portable.exe` | Kurulumsuz, tek dosya |
+            | `SENTIMENT-AI-Windows-x64.zip` | Klasör hâlinde uygulama (SentimentAI.exe) |
+            | `SENTIMENT-AI.apk` | Android 7.0+ |
+            | `test-raporlari.zip` | CI test çıktıları ve ekran görüntüleri |
+
+            Kullanmak için Ayarlar'dan ücretsiz bir Gemini veya Groq API anahtarı girin. Ayrıntılar: README.
+          files: |
+            release/SENTIMENT-AI-Setup.exe
+            release/SENTIMENT-AI-Portable.exe
+            release/SENTIMENT-AI-Windows-x64.zip
+            release/SENTIMENT-AI.apk
+            release/test-raporlari.zip
+            release/*.png
+          overwrite_files: true

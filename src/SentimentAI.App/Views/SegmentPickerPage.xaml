@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Dosyadan tek bir kısa metin parçası seçme ekranı. Dosya yüklemek toplu analiz anlamına gelmez. -->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:files="clr-namespace:SentimentAI.Core.Files;assembly=SentimentAI.Core"
+             x:Class="SentimentAI.App.Views.SegmentPickerPage"
+             Title="Metin seç">
+
+    <Grid RowDefinitions="Auto,Auto,*" Padding="16,14,16,0" RowSpacing="10" MaximumWidthRequest="900">
+
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+            <VerticalStackLayout Spacing="2">
+                <Label Text="Analiz edilecek metni seç" FontSize="18" FontAttributes="Bold" />
+                <Label x:Name="FileInfoLabel" Style="{StaticResource Caption}" />
+            </VerticalStackLayout>
+            <Button Grid.Column="1" Text="Vazgeç" Style="{StaticResource GhostButton}" Clicked="OnCancelClicked" VerticalOptions="Start" />
+        </Grid>
+
+        <VerticalStackLayout Grid.Row="1" Spacing="8">
+            <Label Style="{StaticResource Caption}"
+                   Text="Dosyanın tamamı gönderilmez. Yalnızca seçtiğin tek parça giriş alanına alınır ve sen 'Analiz Et' dersen gönderilir." />
+            <Label x:Name="TruncatedLabel" IsVisible="False" Style="{StaticResource Caption}" TextColor="{StaticResource Warning}"
+                   Text="Dosya çok büyük olduğu için yalnızca ilk bölümler listelendi." />
+            <Entry x:Name="FilterEntry" Placeholder="Parçalarda ara…" TextChanged="OnFilterChanged" ClearButtonVisibility="WhileEditing" />
+        </VerticalStackLayout>
+
+        <CollectionView x:Name="SegmentList" Grid.Row="2" SelectionMode="Single" SelectionChanged="OnSelectionChanged">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="8" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="files:TextSegment">
+                    <Border Style="{StaticResource Card}" Padding="14,10">
+                        <VerticalStackLayout Spacing="4">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Label Text="{Binding Label}" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource PrimaryLight}" LineBreakMode="TailTruncation" />
+                                <Label Grid.Column="1" Text="{Binding LengthText}" Style="{StaticResource Caption}" />
+                            </Grid>
+                            <Label Text="{Binding Preview}" Style="{StaticResource Body}" MaxLines="3" LineBreakMode="TailTruncation" />
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <CollectionView.Footer>
+                <BoxView HeightRequest="16" Color="Transparent" />
+            </CollectionView.Footer>
+        </CollectionView>
+    </Grid>
+</ContentPage>

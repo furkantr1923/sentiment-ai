@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- Yüzeyler: siyah ve çok koyu antrasit -->
+    <Color x:Key="Background">#07070B</Color>
+    <Color x:Key="Surface">#101017</Color>
+    <Color x:Key="Surface2">#16161F</Color>
+    <Color x:Key="Surface3">#1D1D29</Color>
+    <Color x:Key="Stroke">#262636</Color>
+    <Color x:Key="StrokeStrong">#34344A</Color>
+
+    <!-- Vurgular: mor + neon pembe -->
+    <Color x:Key="Primary">#8B5CF6</Color>
+    <Color x:Key="PrimaryLight">#A78BFA</Color>
+    <Color x:Key="PrimaryDark">#6D28D9</Color>
+    <Color x:Key="Accent">#FF2E97</Color>
+    <Color x:Key="PrimaryGlow">#558B5CF6</Color>
+
+    <!-- Metin -->
+    <Color x:Key="TextPrimary">#F4F4F8</Color>
+    <Color x:Key="TextSecondary">#B4B4C6</Color>
+    <Color x:Key="TextMuted">#7C7C92</Color>
+
+    <!-- Durum renkleri -->
+    <Color x:Key="Positive">#34D399</Color>
+    <Color x:Key="Negative">#FF4D8D</Color>
+    <Color x:Key="Neutral">#8E8EA8</Color>
+    <Color x:Key="Warning">#FBBF24</Color>
+    <Color x:Key="Danger">#F87171</Color>
+    <Color x:Key="DangerSurface">#2A1218</Color>
+    <Color x:Key="WarningSurface">#2A2210</Color>
+
+    <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource Background}" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource Surface}" />
+
+    <LinearGradientBrush x:Key="NeonGradient" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#8B5CF6" Offset="0.0" />
+        <GradientStop Color="#B04CE0" Offset="0.55" />
+        <GradientStop Color="#FF2E97" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="NeonGradientDisabled" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#2B2540" Offset="0.0" />
+        <GradientStop Color="#33223A" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="CardGlow" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#1A1426" Offset="0.0" />
+        <GradientStop Color="#111018" Offset="1.0" />
+    </LinearGradientBrush>
+
+</ResourceDictionary>

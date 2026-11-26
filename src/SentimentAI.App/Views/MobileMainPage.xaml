@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Android düzeni: tek elle kullanım için tüm eylemler ekranın altındaki sabit çubukta.
+  Klavye açıldığında pencere yeniden boyutlanır (adjustResize); alt çubuk ve giriş alanı görünür kalır.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:SentimentAI.App.ViewModels"
+             xmlns:views="clr-namespace:SentimentAI.App.Views"
+             xmlns:controls="clr-namespace:SentimentAI.App.Controls"
+             x:Class="SentimentAI.App.Views.MobileMainPage"
+             x:DataType="vm:MainViewModel"
+             NavigationPage.HasNavigationBar="False"
+             Title="SENTIMENT AI">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- Üst çubuk -->
+        <Grid Padding="16,14,12,8" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+            <Image Source="logo_mark.png" WidthRequest="34" HeightRequest="34" VerticalOptions="Center" />
+            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="0">
+                <Label Text="SENTIMENT AI" FontAttributes="Bold" FontSize="17" CharacterSpacing="2" />
+                <Label Text="Türkçe Metinlerin Duygu ve Anlam Analizi" Style="{StaticResource Caption}" FontSize="11" LineBreakMode="TailTruncation" />
+            </VerticalStackLayout>
+            <ImageButton Grid.Column="2" Source="ic_settings.png" Style="{StaticResource IconButton}"
+                         Command="{Binding OpenSettingsCommand}" SemanticProperties.Description="Ayarlar" />
+        </Grid>
+
+        <!-- İçerik -->
+        <ScrollView x:Name="Scroller" Grid.Row="1">
+            <VerticalStackLayout Padding="16,4,16,20" Spacing="14">
+
+                <!-- Durum satırı -->
+                <HorizontalStackLayout Spacing="8">
+                    <Border Style="{StaticResource StatusPill}">
+                        <HorizontalStackLayout Spacing="6">
+                            <BoxView WidthRequest="8" HeightRequest="8" CornerRadius="4" Color="{Binding ConnectionColor}" VerticalOptions="Center" />
+                            <Label Text="{Binding ConnectionText}" FontSize="12" TextColor="{StaticResource TextSecondary}" />
+                        </HorizontalStackLayout>
+                    </Border>
+                    <Border Style="{StaticResource StatusPill}">
+                        <Label Text="{Binding ProviderText}" FontSize="12" TextColor="{StaticResource TextSecondary}" />
+                    </Border>
+                </HorizontalStackLayout>
+
+                <!-- API anahtarı uyarısı -->
+                <Border Style="{StaticResource Card}" IsVisible="{Binding NeedsApiKey}" Stroke="{StaticResource Primary}" Padding="14,12">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding OpenSettingsCommand}" />
+                    </Border.GestureRecognizers>
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Başlamak için ücretsiz API anahtarı ekle" FontAttributes="Bold" />
+                        <Label Text="Ayarlar'dan Gemini veya Groq anahtarını gir (kart gerekmez). Dokun →" Style="{StaticResource Caption}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Metin giriş kartı -->
+                <Border Style="{StaticResource Card}" Padding="12,10">
+                    <VerticalStackLayout Spacing="6">
+                        <Editor x:Name="InputEditor" Text="{Binding InputText}" Placeholder="{Binding Placeholder}"
+                                HeightRequest="190" AutoSize="Disabled" IsSpellCheckEnabled="False" IsTextPredictionEnabled="True" />
+                        <Label Text="{Binding LoadedFileInfo, StringFormat='Dosyadan: {0}'}" IsVisible="{Binding HasLoadedFile}"
+                               Style="{StaticResource Caption}" TextColor="{StaticResource PrimaryLight}" LineBreakMode="TailTruncation" />
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Text="{Binding LimitHint}" Style="{StaticResource Caption}" FontSize="11" VerticalOptions="Center" />
+                            <Label Grid.Column="1" Text="{Binding CharCounterText}" TextColor="{Binding CharCounterColor}"
+                                   FontSize="12" FontAttributes="Bold" VerticalOptions="Center" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <controls:NeonProgressBar IsRunning="{Binding IsBusy}" />
+
+                <!-- Hata kartı -->
+                <Border Style="{StaticResource Card}" IsVisible="{Binding HasError}"
+                        BackgroundColor="{StaticResource DangerSurface}" Stroke="{StaticResource Danger}">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="{Binding ErrorTitle}" FontAttributes="Bold" TextColor="{StaticResource Danger}" FontSize="15" />
+                        <Label Text="{Binding ErrorReason}" Style="{StaticResource Body}" />
+                        <Label Text="{Binding ErrorAction, StringFormat='Ne yapabilirsin: {0}'}" Style="{StaticResource Body}" TextColor="{StaticResource TextPrimary}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Boş durum -->
+                <Border Style="{StaticResource Card}" IsVisible="{Binding IsEmptyState}" Padding="16,14">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Ne analiz edilir?" Style="{StaticResource CardTitle}" Margin="0" />
+                        <Label Style="{StaticResource Body}" FontSize="13"
+                               Text="Baskın duygu ve güven · pozitif/negatif/nötr dağılımı · 11+ duygu · yoğunluk · konu, amaç ve hedef kitle · anahtar kelimeler ve kelime bulutu · ironi, sarkazm ve mizah · yazım/dilbilgisi ve düzeltilmiş metin · anlatım önerileri" />
+                        <Label Text="{Binding SupportedFilesText}" Style="{StaticResource Caption}" Margin="0,4,0,0" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <views:ResultsView x:Name="Results" IsVisible="{Binding HasResult}" />
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Alt eylem çubuğu (başparmak bölgesi) -->
+        <Border Grid.Row="2" StrokeThickness="0" BackgroundColor="{StaticResource Surface}" Padding="12,10,12,14">
+            <Grid ColumnDefinitions="Auto,Auto,*" ColumnSpacing="10">
+                <ImageButton Source="ic_clear.png" Style="{StaticResource IconButton}" WidthRequest="52" HeightRequest="52"
+                             Command="{Binding ClearCommand}" SemanticProperties.Description="Temizle" />
+                <ImageButton Grid.Column="1" Source="ic_upload.png" Style="{StaticResource IconButton}" WidthRequest="52" HeightRequest="52"
+                             Command="{Binding PickFileCommand}" SemanticProperties.Description="Dosyadan metin yükle" />
+                <Button Grid.Column="2" Style="{StaticResource PrimaryButton}" Text="{Binding AnalyzeButtonText}"
+                        ImageSource="ic_spark.png" ContentLayout="Left,8" HeightRequest="52"
+                        Command="{Binding AnalyzeCommand}" />
+            </Grid>
+        </Border>
+
+    </Grid>
+</ContentPage>

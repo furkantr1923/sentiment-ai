@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SentimentAI.Core/SentimentAI.Core.csproj" />
+    <Project Path="src/SentimentAI.App/SentimentAI.App.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SentimentAI.Core.Tests/SentimentAI.Core.Tests.csproj" />
+    <Project Path="tests/SentimentAI.LiveTests/SentimentAI.LiveTests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/PortableLauncher/PortableLauncher.csproj" />
+  </Folder>
+</Solution>

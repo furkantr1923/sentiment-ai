@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:SentimentAI.App.ViewModels"
+             x:Class="SentimentAI.App.Views.SettingsPage"
+             x:DataType="vm:SettingsViewModel"
+             Title="Ayarlar">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,16,20,32" Spacing="16" MaximumWidthRequest="780">
+
+            <!-- Bağlantı -->
+            <Border Style="{StaticResource Card}">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="İnternet bağlantısı" Style="{StaticResource CardTitle}" Margin="0" />
+                    <HorizontalStackLayout Spacing="8">
+                        <BoxView WidthRequest="10" HeightRequest="10" CornerRadius="5" Color="{Binding ConnectionColor}" VerticalOptions="Center" />
+                        <Label Text="{Binding ConnectionText}" />
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- API sağlayıcıları -->
+            <Label Text="API yapılandırması ve sağlayıcı durumu" Style="{StaticResource CardTitle}" Margin="4,4,0,-6" />
+            <VerticalStackLayout Spacing="14" BindableLayout.ItemsSource="{Binding Providers}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ProviderItemViewModel">
+                        <Border Style="{StaticResource Card}">
+                            <VerticalStackLayout Spacing="10">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <VerticalStackLayout Spacing="0">
+                                        <Label Text="{Binding Name}" FontSize="17" FontAttributes="Bold" />
+                                        <Label Text="{Binding RoleText}" Style="{StaticResource Caption}" />
+                                    </VerticalStackLayout>
+                                    <Button Grid.Column="1" Text="Ücretsiz anahtar al ↗" Style="{StaticResource GhostButton}"
+                                            Command="{Binding GetKeyCommand}" VerticalOptions="Center" />
+                                </Grid>
+
+                                <HorizontalStackLayout Spacing="8">
+                                    <BoxView WidthRequest="8" HeightRequest="8" CornerRadius="4" Color="{Binding StatusColor}" VerticalOptions="Center" />
+                                    <Label Text="{Binding StatusText}" TextColor="{Binding StatusColor}" FontSize="13" />
+                                    <ActivityIndicator IsRunning="{Binding IsChecking}" IsVisible="{Binding IsChecking}" HeightRequest="16" WidthRequest="16" />
+                                </HorizontalStackLayout>
+
+                                <Entry Text="{Binding KeyInput}" Placeholder="{Binding KeyPlaceholder}" IsPassword="True"
+                                       IsSpellCheckEnabled="False" IsTextPredictionEnabled="False" ClearButtonVisibility="WhileEditing" />
+
+                                <FlexLayout Wrap="Wrap" JustifyContent="Start">
+                                    <Button Text="Kaydet ve test et" Style="{StaticResource PrimaryButton}" FontSize="14" MinimumHeightRequest="42"
+                                            Command="{Binding SaveCommand}" Margin="0,0,8,8" />
+                                    <Button Text="Test et" Style="{StaticResource GhostButton}" Command="{Binding TestCommand}" Margin="0,0,8,8" />
+                                    <Button Text="Anahtarı sil" Style="{StaticResource GhostButton}" Command="{Binding RemoveCommand}" Margin="0,0,8,8" />
+                                </FlexLayout>
+
+                                <Label Text="{Binding ModelText}" Style="{StaticResource Caption}" />
+                                <Label Text="{Binding PrivacyNote}" Style="{StaticResource Caption}" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
+            <!-- Yedek geçiş -->
+            <Border Style="{StaticResource Card}">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Yedek sağlayıcıya geçiş" Style="{StaticResource CardTitle}" Margin="0" />
+                    <Label Text="{Binding FallbackText}" Style="{StaticResource Body}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Gizlilik -->
+            <Border Style="{StaticResource Card}">
+                <VerticalStackLayout Spacing="8">
+                    <HorizontalStackLayout Spacing="8">
+                        <Image Source="ic_shield.png" WidthRequest="18" HeightRequest="18" VerticalOptions="Center" />
+                        <Label Text="Gizlilik açıklaması" Style="{StaticResource CardTitle}" Margin="0" VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                    <Label Text="{Binding PrivacyText}" Style="{StaticResource Body}" FontSize="13" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Sınırlar -->
+            <Border Style="{StaticResource Card}">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Sınırlar" Style="{StaticResource CardTitle}" Margin="0" />
+                    <Label Text="{Binding LimitsText}" Style="{StaticResource Body}" FontSize="13" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Hakkında -->
+            <Border Style="{StaticResource HeroCard}" Padding="22,20">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Hakkında" Style="{StaticResource CardTitle}" Margin="0" />
+                    <HorizontalStackLayout Spacing="12">
+                        <Image Source="logo_mark.png" WidthRequest="48" HeightRequest="48" VerticalOptions="Center" />
+                        <VerticalStackLayout VerticalOptions="Center" Spacing="0">
+                            <Label Text="SENTIMENT AI" FontSize="18" FontAttributes="Bold" CharacterSpacing="2" />
+                            <Label Text="Türkçe Metinlerin Duygu ve Anlam Analizi" Style="{StaticResource Caption}" />
+                        </VerticalStackLayout>
+                    </HorizontalStackLayout>
+                    <Label Text="{Binding AboutText}" Style="{StaticResource Body}" />
+                    <Label Text="{Binding VersionText}" Style="{StaticResource Caption}" />
+                    <BoxView HeightRequest="1" Color="{StaticResource Stroke}" Margin="0,4" />
+                    <Label>
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="Tasarım ve geliştirme  " TextColor="{StaticResource TextMuted}" FontSize="12" />
+                                <Span Text="Furkan" TextColor="{StaticResource PrimaryLight}" FontSize="16" FontAttributes="Bold,Italic" />
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
+                </VerticalStackLayout>
+            </Border>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

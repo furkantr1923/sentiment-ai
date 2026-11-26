@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:SentimentAI.App.ViewModels"
+             xmlns:models="clr-namespace:SentimentAI.Core.Models;assembly=SentimentAI.Core"
+             x:Class="SentimentAI.App.Views.ResultsView"
+             x:DataType="vm:MainViewModel">
+
+    <VerticalStackLayout Spacing="14">
+
+        <!-- 1–2. Baskın duygu + güven -->
+        <Border Style="{StaticResource HeroCard}">
+            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="12">
+                <Label Text="Baskın duygu" Style="{StaticResource CardTitle}" />
+                <Label Grid.Row="1" Text="{Binding DominantEmotion}" FontSize="34" FontAttributes="Bold" LineBreakMode="TailTruncation" />
+                <HorizontalStackLayout Grid.Row="2" Spacing="10" Margin="0,4,0,0">
+                    <Border Style="{StaticResource StatusPill}">
+                        <Label Text="{Binding PolarityText}" TextColor="{Binding PolarityColor}" FontAttributes="Bold" FontSize="13" />
+                    </Border>
+                    <Label Text="{Binding IntensityText, StringFormat='{0} yoğunluk'}" Style="{StaticResource Caption}" VerticalOptions="Center" />
+                </HorizontalStackLayout>
+                <VerticalStackLayout Grid.Column="1" Grid.RowSpan="3" VerticalOptions="Center" HorizontalOptions="End">
+                    <Label Text="{Binding ConfidenceText}" FontSize="34" FontAttributes="Bold"
+                           TextColor="{StaticResource PrimaryLight}" HorizontalTextAlignment="End" />
+                    <Label Text="tahmini model güveni" Style="{StaticResource Caption}" HorizontalTextAlignment="End" />
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+
+        <!-- Düşük güven uyarısı -->
+        <Border Style="{StaticResource Card}" IsVisible="{Binding IsLowConfidence}"
+                BackgroundColor="{StaticResource WarningSurface}" Stroke="{StaticResource Warning}" Padding="14,10">
+            <Label Text="{Binding LowConfidenceText}" TextColor="{StaticResource Warning}" FontSize="13" />
+        </Border>
+
+        <!-- 3. Pozitif/negatif/nötr  ·  5. Yoğunluk -->
+        <Grid x:Name="ChartsGrid" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="14" RowSpacing="14">
+            <Border x:Name="PolarityCard" Style="{StaticResource Card}">
+                <VerticalStackLayout>
+                    <Label Text="Duygu yönü" Style="{StaticResource CardTitle}" />
+                    <GraphicsView Drawable="{Binding PolarityChart}" HeightRequest="180" />
+                </VerticalStackLayout>
+            </Border>
+            <Border x:Name="IntensityCard" Grid.Column="1" Style="{StaticResource Card}">
+                <VerticalStackLayout>
+                    <Label Text="Duygu yoğunluğu" Style="{StaticResource CardTitle}" />
+                    <GraphicsView Drawable="{Binding IntensityChart}" HeightRequest="180" />
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+
+        <!-- 4. Duygu dağılımı -->
+        <Border Style="{StaticResource Card}">
+            <VerticalStackLayout>
+                <Label Text="Duygu dağılımı" Style="{StaticResource CardTitle}" />
+                <GraphicsView Drawable="{Binding EmotionChart}" HeightRequest="{Binding EmotionChartHeight}" />
+            </VerticalStackLayout>
+        </Border>
+
+        <!-- 7–8. Konu, amaç, hedef kitle, özet -->
+        <Border Style="{StaticResource Card}">
+            <VerticalStackLayout Spacing="14">
+                <Label Text="Dil ve anlam" Style="{StaticResource CardTitle}" Margin="0" />
+                <VerticalStackLayout Spacing="2">
+                    <Label Text="Konu" Style="{StaticResource Caption}" />
+                    <Label Text="{Binding Topic}" FontAttributes="Bold" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Spacing="2">
+                    <Label Text="Muhtemel amaç · tahmin" Style="{StaticResource Caption}" />
+                    <Label Text="{Binding Purpose}" Style="{StaticResource Body}" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Spacing="2">
+                    <Label Text="Hedef kitle · tahmin" Style="{StaticResource Caption}" />
+                    <Label Text="{Binding Audience}" Style="{StaticResource Body}" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Spacing="2">
+                    <Label Text="Kısa özet" Style="{StaticResource Caption}" />
+                    <Label Text="{Binding Summary}" Style="{StaticResource Body}" />
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </Border>
+
+        <!-- 6. Anahtar kelimeler  ·  13. Kelime bulutu -->
+        <Border Style="{StaticResource Card}" IsVisible="{Binding HasKeywords}">
+            <VerticalStackLayout Spacing="6">
+                <Label Text="Anahtar kelimeler" Style="{StaticResource CardTitle}" />
+                <FlexLayout Wrap="Wrap" BindableLayout.ItemsSource="{Binding Keywords}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="models:KeywordWeight">
+                            <Border Style="{StaticResource Chip}">
+                                <Label Text="{Binding Word}" FontSize="13" TextColor="{StaticResource TextPrimary}" />
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </FlexLayout>
+                <Label Text="Kelime bulutu" Style="{StaticResource CardTitle}" Margin="0,8,0,0" />
+                <GraphicsView Drawable="{Binding WordCloud}" HeightRequest="200" />
+            </VerticalStackLayout>
+        </Border>
+
+        <!-- 9. İroni / sarkazm / alay / mizah -->
+        <Border Style="{StaticResource Card}">
+            <VerticalStackLayout Spacing="10">
+                <Label Text="İroni ve mizah · tahmin" Style="{StaticResource CardTitle}" Margin="0" />
+                <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding ToneItems}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ToneItem">
+                            <Grid ColumnDefinitions="*,Auto,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="10">
+                                <Label Text="{Binding Name}" FontAttributes="Bold" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="{Binding ScoreText}" Style="{StaticResource Caption}" VerticalOptions="Center" />
+                                <Border Grid.Column="2" BackgroundColor="{Binding BadgeColor}" StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 10" Padding="10,3">
+                                    <Label Text="{Binding BadgeText}" FontSize="12" TextColor="White" />
+                                </Border>
+                                <Label Grid.Row="1" Grid.ColumnSpan="3" Text="{Binding Note}" IsVisible="{Binding HasNote}"
+                                       Style="{StaticResource Caption}" />
+                            </Grid>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </Border>
+
+        <!-- 10–11. Yazım ve dilbilgisi, düzeltilmiş metin -->
+        <Border Style="{StaticResource Card}">
+            <VerticalStackLayout Spacing="10">
+                <Label Text="Yazım ve dilbilgisi" Style="{StaticResource CardTitle}" Margin="0" />
+                <Label Text="{Binding SpellingSummary}" Style="{StaticResource Body}" />
+                <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding SpellingIssues}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="models:SpellingIssue">
+                            <Border BackgroundColor="{StaticResource Surface2}" Stroke="{StaticResource Stroke}"
+                                    StrokeShape="RoundRectangle 12" Padding="12,8">
+                                <VerticalStackLayout Spacing="3">
+                                    <Label Text="{Binding Type}" FontSize="11" TextColor="{StaticResource Accent}" FontAttributes="Bold" />
+                                    <Label>
+                                        <Label.FormattedText>
+                                            <FormattedString>
+                                                <Span Text="{Binding Original}" TextDecorations="Strikethrough" TextColor="{StaticResource TextMuted}" />
+                                                <Span Text="  →  " TextColor="{StaticResource TextMuted}" />
+                                                <Span Text="{Binding Suggestion}" TextColor="{StaticResource Positive}" FontAttributes="Bold" />
+                                            </FormattedString>
+                                        </Label.FormattedText>
+                                    </Label>
+                                    <Label Text="{Binding Note}" Style="{StaticResource Caption}" />
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="8" IsVisible="{Binding HasCorrectedText}" Margin="0,6,0,0">
+                    <Label Text="Düzeltilmiş metin önerisi" Style="{StaticResource CardTitle}" Margin="0" />
+                    <Border BackgroundColor="{StaticResource Surface2}" Stroke="{StaticResource PrimaryDark}"
+                            StrokeShape="RoundRectangle 12" Padding="14,10">
+                        <Label Text="{Binding CorrectedText}" Style="{StaticResource Body}" TextColor="{StaticResource TextPrimary}" />
+                    </Border>
+                    <Button Text="Düzeltilmiş metni giriş alanına uygula" Style="{StaticResource GhostButton}"
+                            Command="{Binding UseCorrectedTextCommand}" IsVisible="{Binding CanUseCorrectedText}"
+                            HorizontalOptions="Start" />
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </Border>
+
+        <!-- 12. Metin geliştirme önerileri -->
+        <Border Style="{StaticResource Card}" IsVisible="{Binding HasImprovements}">
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Metin geliştirme önerileri" Style="{StaticResource CardTitle}" Margin="0" />
+                <VerticalStackLayout Spacing="6" BindableLayout.ItemsSource="{Binding Improvements}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="x:String">
+                            <Grid ColumnDefinitions="16,*">
+                                <Label Text="•" TextColor="{StaticResource Accent}" FontAttributes="Bold" />
+                                <Label Grid.Column="1" Text="{Binding .}" Style="{StaticResource Body}" />
+                            </Grid>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+                <VerticalStackLayout Spacing="2" IsVisible="{Binding HasRepetitions}" Margin="0,6,0,0">
+                    <Label Text="Gereksiz tekrarlar" Style="{StaticResource Caption}" />
+                    <Label Text="{Binding RepetitionsText}" Style="{StaticResource Body}" />
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </Border>
+
+        <!-- Analiz bilgisi -->
+        <VerticalStackLayout Spacing="4" Padding="4,0,4,8">
+            <Label Text="{Binding ProviderUsedText, StringFormat='Analiz: {0}'}" Style="{StaticResource Caption}" />
+            <Label Text="{Binding AnonymizationText}" IsVisible="{Binding HasAnonymization}" Style="{StaticResource Caption}" />
+            <Label Text="Sonuçlar yapay zekâ tahminidir; kesin doğruluk garantisi vermez." Style="{StaticResource Caption}" />
+        </VerticalStackLayout>
+
+    </VerticalStackLayout>
+</ContentView>

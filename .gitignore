@@ -1,0 +1,23 @@
+# Build çıktıları
+bin/
+obj/
+out/
+dist/
+reports/
+artifacts/
+*.user
+*.suo
+.vs/
+.vscode/
+.idea/
+TestResults/
+
+# Gizli bilgiler — ASLA repoya eklenmez
+*.jks
+*.keystore
+*.pfx
+*.snk
+.env
+.env.*
+appsettings.*.local.json
+secrets.json

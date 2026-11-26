@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Gerçek API'lere karşı çalışan entegrasyon testleri.
+    Anahtarlar yalnızca ortam değişkenlerinden okunur (GEMINI_API_KEY, GROQ_API_KEY);
+    anahtar yoksa ilgili test "ATLANDI" olarak raporlanır, asla "GEÇTİ" sayılmaz.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\SentimentAI.Core\SentimentAI.Core.csproj" />
+  </ItemGroup>
+
+</Project>

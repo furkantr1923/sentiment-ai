@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--
+      targetSdkVersion 34: klasik adjustResize davranışı korunur; klavye açıldığında giriş alanı ve
+      alt eylem çubuğu görünür kalır (Android 15+ zorunlu kenardan kenara düzeninden etkilenmez).
+    -->
+    <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="34" />
+
+    <application
+        android:allowBackup="false"
+        android:icon="@mipmap/appicon"
+        android:roundIcon="@mipmap/appicon_round"
+        android:label="SENTIMENT AI"
+        android:supportsRtl="true" />
+
+    <!-- Yalnızca analiz API'sine erişim ve bağlantı durumunu okumak için -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+</manifest>

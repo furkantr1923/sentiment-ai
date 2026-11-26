@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Linux/macOS'ta yalnızca Android, Windows'ta Android + Windows derlenir -->
+    <TargetFrameworks>net10.0-android</TargetFrameworks>
+    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net10.0-windows10.0.19041.0</TargetFrameworks>
+
+    <OutputType>Exe</OutputType>
+    <RootNamespace>SentimentAI.App</RootNamespace>
+    <AssemblyName>SentimentAI</AssemblyName>
+    <UseMaui>true</UseMaui>
+    <SingleProject>true</SingleProject>
+
+    <!-- Uygulama kimliği -->
+    <ApplicationTitle>SENTIMENT AI</ApplicationTitle>
+    <ApplicationId>com.furkan.sentimentai</ApplicationId>
+    <ApplicationDisplayVersion Condition="'$(ApplicationDisplayVersion)' == ''">$(Version)</ApplicationDisplayVersion>
+    <ApplicationVersion Condition="'$(ApplicationVersion)' == ''">1</ApplicationVersion>
+
+    <!-- Derleme zamanı XAML bağlama denetimi ve hızlı bağlamalar -->
+    <MauiEnableXamlCBindingWithSourceCompilation>true</MauiEnableXamlCBindingWithSourceCompilation>
+
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
+    <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
+  </PropertyGroup>
+
+  <!-- Windows: paketlenmemiş (MSIX'siz) bağımsız masaüstü uygulaması -->
+  <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
+    <WindowsPackageType>None</WindowsPackageType>
+  </PropertyGroup>
+
+  <!-- Android: yalnızca gerçek cihaz mimarileri (APK boyutunu küçük tutar) -->
+  <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+    <RuntimeIdentifiers Condition="'$(RuntimeIdentifiers)' == ''">android-arm64;android-arm</RuntimeIdentifiers>
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Uygulama simgesi ve açılış ekranı (SVG'den tüm çözünürlükler otomatik üretilir) -->
+    <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#0B0B12" />
+    <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#07070B" BaseSize="160,160" />
+    <MauiImage Include="Resources\Images\*.svg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" Condition="'$(Configuration)' == 'Debug'" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SentimentAI.Core\SentimentAI.Core.csproj" />
+  </ItemGroup>
+
+</Project>
